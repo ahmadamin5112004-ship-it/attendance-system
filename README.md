@@ -7,7 +7,7 @@
   [![Dart](https://img.shields.io/badge/Dart-3.12.2-0175C2?style=for-the-badge&logo=dart&logoColor=white)](https://dart.dev)
   [![Firebase](https://img.shields.io/badge/Firebase-Auth%20%26%20Firestore-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com)
   [![Material 3](https://img.shields.io/badge/Design-Material--3-7B1FA2?style=for-the-badge&logo=materialdesign&logoColor=white)](https://m3.material.io)
-  [![Release](https://img.shields.io/badge/Release-v1.0.1-brightgreen?style=for-the-badge&logo=android)](https://github.com/ahmadamin5112004-ship-it/attendance-system/releases/tag/v1.0.1)
+  [![Release](https://img.shields.io/badge/Release-v1.0.2-brightgreen?style=for-the-badge&logo=android)](https://github.com/ahmadamin5112004-ship-it/attendance-system/releases/tag/v1.0.2)
 
 </div>
 
@@ -211,7 +211,7 @@ lib/
 
 ### Option 1: Direct APK Installation (Recommended)
 Download and install the compiled Android release binary:
-👉 **[Download APK Release (v1.0.1)](https://github.com/ahmadamin5112004-ship-it/attendance-system/releases/tag/v1.0.1)**
+👉 **[Download APK Release (v1.0.2)](https://github.com/ahmadamin5112004-ship-it/attendance-system/releases/tag/v1.0.2)**
 
 ### Option 2: Running from Source
 1. **Clone the repository:**
