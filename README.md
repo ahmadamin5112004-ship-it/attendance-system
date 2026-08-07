@@ -240,6 +240,3 @@ Download and install the compiled Android release binary:
 
 ---
 
-<div align="center">
-  <sub>Built with ❤️ for Software Engineering University Project.</sub>
-</div>
