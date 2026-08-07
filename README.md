@@ -232,11 +232,11 @@ Download and install the compiled Android release binary:
 
 ## 👥 Contributors
 
-| Contributor Name | Student ID | Role |
-| :--- | :--- | :--- |
-| **Ahmad Amin** | `2022831044` | Lead Developer & Software Engineer |
-| **Akash Talukder** | `2023831016` | System Analyst & Developer |
-| **Shakhawat Hossain Saikat** | `2023831008` | UI/UX Designer & QA Specialist |
+| Contributor Name | Student ID |
+| :--- | :--- |
+| **Ahmad Amin** | `2022831044` |
+| **Akash Talukder** | `2023831016` |
+| **Shakhawat Hossain Saikat** | `2023831008` |
 
 ---
 
