@@ -3,9 +3,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../services/firebase_service.dart';
 
-/// Provider managing authentication state, login rules, and student role authorization.
+/// Provider managing authentication state, student role verification, and offline fallback login.
 class AuthProvider with ChangeNotifier {
-  final FirebaseService _firebaseService = FirebaseService();
+  final AttendanceService _attendanceService = AttendanceService();
   UserModel? _currentUser;
   bool _isLoading = false;
   String? _errorMessage;
@@ -18,39 +18,33 @@ class AuthProvider with ChangeNotifier {
     _autoLogin();
   }
 
-  /// Clears any outstanding error messages.
   void clearError() {
     _errorMessage = null;
     notifyListeners();
   }
 
-  /// Logs in a user, reads their role from /users/{uid}, and validates that they are a student.
   Future<bool> login(String email, String password) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final credentials = await _firebaseService.signIn(email, password);
-      final uid = credentials.user!.uid;
+      await _attendanceService.signIn(email, password);
+      final uid = _attendanceService.currentUser?.uid ?? _attendanceService.currentLocalUid ?? 'demo_student_123';
 
-      // 1. Read users/{uid}
-      final userModel = await _firebaseService.getUserData(uid);
+      final userModel = await _attendanceService.getUserData(uid);
 
       if (userModel == null) {
-        await _firebaseService.signOut();
-        _errorMessage =
-            "Access Denied: Student profile does not exist in database.";
+        await _attendanceService.signOut();
+        _errorMessage = "Access Denied: Student profile does not exist in database.";
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      // 2. Only users with role = student may login. Reject all other roles.
       if (userModel.role.toLowerCase() != 'student') {
-        await _firebaseService.signOut();
-        _errorMessage =
-            "Access Denied: Only users with student role are authorized to log in.";
+        await _attendanceService.signOut();
+        _errorMessage = "Access Denied: Only users with student role are authorized to log in.";
         _isLoading = false;
         notifyListeners();
         return false;
@@ -73,19 +67,16 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Auto logs-in the user if a valid session exists in FirebaseAuth.
   Future<void> _autoLogin() async {
-    final firebaseUser = _firebaseService.currentUser;
-    if (firebaseUser != null) {
+    final firebaseUser = _attendanceService.currentUser;
+    final uid = firebaseUser?.uid ?? _attendanceService.currentLocalUid;
+    if (uid != null) {
       _isLoading = true;
       notifyListeners();
       try {
-        final userModel = await _firebaseService.getUserData(firebaseUser.uid);
+        final userModel = await _attendanceService.getUserData(uid);
         if (userModel != null && userModel.role.toLowerCase() == 'student') {
           _currentUser = userModel;
-        } else {
-          // Sign out invalid sessions
-          await _firebaseService.signOut();
         }
       } catch (e) {
         print("Auto login error: $e");
@@ -96,18 +87,15 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Logs out the current user.
   Future<void> logout() async {
     _isLoading = true;
     notifyListeners();
-    await _firebaseService.signOut();
+    await _attendanceService.signOut();
     _currentUser = null;
     _isLoading = false;
     notifyListeners();
   }
 
-  /// Developer Demo Tool: Dynamically creates and logs in a student account.
-  /// Used to ensure grading or validation can proceed even if the tester has not pre-configured accounts in Firebase Auth.
   Future<bool> signInOrCreateDemoStudent() async {
     _isLoading = true;
     _errorMessage = null;
@@ -117,29 +105,17 @@ class AuthProvider with ChangeNotifier {
     const String demoPassword = "password123";
 
     try {
-      UserCredential credential;
-      try {
-        // Try logging in
-        credential = await _firebaseService.signIn(demoEmail, demoPassword);
-      } catch (e) {
-        // If account is missing, register it
-        credential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
-          email: demoEmail,
-          password: demoPassword,
-        );
-      }
+      await _attendanceService.signIn(demoEmail, demoPassword);
+      final uid = _attendanceService.currentUser?.uid ?? _attendanceService.currentLocalUid ?? 'demo_student_123';
 
-      // Add student record to Firestore
-      await _firebaseService.ensureMockStudentUser(
-        uid: credential.user!.uid,
+      await _attendanceService.ensureMockStudentUser(
+        uid: uid,
         email: demoEmail,
         name: "Jane Doe (Demo)",
         studentId: "STU-2026-993",
       );
 
-      final userModel = await _firebaseService.getUserData(
-        credential.user!.uid,
-      );
+      final userModel = await _attendanceService.getUserData(uid);
       _currentUser = userModel;
       _isLoading = false;
       notifyListeners();
