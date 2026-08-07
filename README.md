@@ -34,15 +34,120 @@ Built with **Clean Architecture**, **State Management via Provider**, and a **Hy
 
 ---
 
-## 🛠️ Technology Stack
+## 📐 System Architecture & UML Diagrams
 
-* **Frontend Framework:** [Flutter SDK](https://flutter.dev) (Material 3 Dark Theme)
-* **Language:** [Dart](https://dart.dev) (Null Safety Enabled)
-* **State Management:** [Provider](https://pub.dev/packages/provider)
-* **Backend Database:** [Firebase Authentication](https://firebase.google.com/docs/auth) & [Cloud Firestore](https://firebase.google.com/docs/firestore)
-* **Hardware Integrations:**
-  * [`mobile_scanner`](https://pub.dev/packages/mobile_scanner) – Camera QR detection
-  * [`geolocator`](https://pub.dev/packages/geolocator) – High-accuracy GPS positioning
+### 1. High-Level Architecture Diagram
+```mermaid
+graph TD
+    subgraph Client ["Flutter Mobile Client (Presentation Layer)"]
+        UI["UI Screens (Login, Home, Scanner, History)"]
+        Widgets["Reusable Widgets (CustomButton, InfoCard)"]
+    end
+
+    subgraph State ["State Management Layer"]
+        AuthProvider["AuthProvider (Auth & User Role State)"]
+        AttendanceProvider["AttendanceProvider (Scan & Verification Logic)"]
+    end
+
+    subgraph Services ["Service Layer"]
+        FirebaseService["AttendanceService (Firebase & Local Store)"]
+        LocationService["LocationService (GPS Permissions & Coordinates)"]
+    end
+
+    subgraph Hardware ["Hardware & External Backend"]
+        Camera["Device Camera (mobile_scanner)"]
+        GPS["GPS Sensor (geolocator)"]
+        FirebaseAuth["Firebase Auth"]
+        Firestore["Cloud Firestore / Local DB"]
+    end
+
+    UI --> AuthProvider
+    UI --> AttendanceProvider
+    AuthProvider --> FirebaseService
+    AttendanceProvider --> FirebaseService
+    AttendanceProvider --> LocationService
+    LocationService --> GPS
+    UI --> Camera
+    FirebaseService --> FirebaseAuth
+    FirebaseService --> Firestore
+```
+
+---
+
+### 2. UML Attendance Verification Sequence Diagram
+```mermaid
+sequenceDiagram
+    autonumber
+    actor Student as Student (User)
+    participant App as QRScannerScreen / UI
+    participant Provider as AttendanceProvider
+    participant Location as LocationService
+    participant Backend as AttendanceService (Firestore)
+
+    Student->>App: Scans QR Code
+    App->>Provider: scanAndSubmitAttendance(qrToken, student)
+    Provider->>Location: getCurrentLocation()
+    Location-->>Provider: Returns (Latitude, Longitude)
+    Provider->>Backend: getActiveSessionByToken(qrToken)
+    Backend-->>Provider: Returns AttendanceSessionModel
+    
+    alt Session Invalid or Expired
+        Provider-->>App: Throw "Invalid QR" Error
+        App-->>Student: Display "Invalid QR" Dialog
+    else Session Valid
+        Provider->>Backend: checkDuplicateAttendance(sessionId, studentId)
+        alt Attendance Already Submitted
+            Backend-->>Provider: Returns true (Duplicate Found)
+            Provider-->>App: Throw "Attendance already submitted" Error
+            App-->>Student: Display "Attendance already submitted" Dialog
+        else First-Time Submission
+            Provider->>Location: calculateDistance(adminCoords, studentCoords)
+            Location-->>Provider: Returns Distance (Meters)
+            Provider->>Backend: submitAttendance(AttendanceRecordModel)
+            Backend-->>Provider: Record Saved Successfully
+            Provider-->>App: Success Confirmation
+            App-->>Student: Display "Attendance Marked" & Present Badge
+        end
+    end
+```
+
+---
+
+### 3. Entity-Relationship (ER) Diagram
+```mermaid
+erDiagram
+    USERS {
+        string uid PK
+        string name
+        string studentId
+        string role
+    }
+
+    ATTENDANCE_SESSIONS {
+        string sessionId PK
+        string adminId FK
+        string qrToken
+        timestamp createdAt
+        timestamp expiresAt
+        double latitude
+        double longitude
+        boolean active
+        string courseName
+    }
+
+    ATTENDANCE {
+        string attendanceId PK
+        string sessionId FK
+        string studentId FK
+        string studentName
+        timestamp timestamp
+        double distance
+        string courseName
+    }
+
+    USERS ||--o{ ATTENDANCE : submits
+    ATTENDANCE_SESSIONS ||--o{ ATTENDANCE : contains
+```
 
 ---
 
@@ -127,8 +232,11 @@ Download and install the compiled Android release binary:
 
 ## 👥 Contributors
 
-* **Ahmad Amin** – Lead Developer & Project Maintainer ([@ahmadamin5112004-ship-it](https://github.com/ahmadamin5112004-ship-it))
-* **Antigravity AI** – Senior Engineering & Architecture Partner (Google DeepMind Team)
+| Contributor Name | Student ID | Role |
+| :--- | :--- | :--- |
+| **Ahmad Amin** | `2022831044` | Lead Developer & Software Engineer |
+| **Akash Talukder** | `2023831016` | System Analyst & Developer |
+| **Shakhawat Hossain Saikat** | `2023831008` | UI/UX Designer & QA Specialist |
 
 ---
 
