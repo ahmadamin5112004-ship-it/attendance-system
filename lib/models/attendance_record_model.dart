@@ -9,6 +9,8 @@ class AttendanceRecordModel {
   final String studentName;
   final DateTime timestamp;
   final double distance;
+  final String? courseId;
+  final String? courseCode;
   final String? courseName; // Cached course name for easy listing in UI history
 
   AttendanceRecordModel({
@@ -18,6 +20,8 @@ class AttendanceRecordModel {
     required this.studentName,
     required this.timestamp,
     required this.distance,
+    this.courseId,
+    this.courseCode,
     this.courseName,
   });
 
@@ -49,6 +53,8 @@ class AttendanceRecordModel {
       studentName: data['studentName'] as String? ?? '',
       timestamp: parsedTimestamp,
       distance: parsedDistance,
+      courseId: data['courseId'] as String?,
+      courseCode: data['courseCode'] as String?,
       courseName: data['courseName'] as String?,
     );
   }
@@ -61,6 +67,8 @@ class AttendanceRecordModel {
       'studentName': studentName,
       'timestamp': Timestamp.fromDate(timestamp),
       'distance': distance,
+      if (courseId != null) 'courseId': courseId,
+      if (courseCode != null) 'courseCode': courseCode,
       if (courseName != null) 'courseName': courseName,
     };
   }

@@ -11,6 +11,8 @@ class AttendanceSessionModel {
   final double latitude;
   final double longitude;
   final bool active;
+  final String? courseId;
+  final String? courseCode;
   final String? courseName; // Optional field for showing friendly course title
 
   AttendanceSessionModel({
@@ -22,6 +24,8 @@ class AttendanceSessionModel {
     required this.latitude,
     required this.longitude,
     required this.active,
+    this.courseId,
+    this.courseCode,
     this.courseName,
   });
 
@@ -71,6 +75,8 @@ class AttendanceSessionModel {
       latitude: parsedLatitude,
       longitude: parsedLongitude,
       active: data['active'] as bool? ?? false,
+      courseId: data['courseId'] as String?,
+      courseCode: data['courseCode'] as String?,
       courseName: data['courseName'] as String?,
     );
   }
@@ -85,6 +91,8 @@ class AttendanceSessionModel {
       'latitude': latitude,
       'longitude': longitude,
       'active': active,
+      if (courseId != null) 'courseId': courseId,
+      if (courseCode != null) 'courseCode': courseCode,
       if (courseName != null) 'courseName': courseName,
     };
   }

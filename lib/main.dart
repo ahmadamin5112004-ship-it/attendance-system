@@ -6,6 +6,7 @@ import 'providers/attendance_provider.dart';
 import 'services/firebase_service.dart';
 import 'screens/login_screen.dart';
 import 'screens/home_screen.dart';
+import 'screens/teacher_home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -82,7 +83,12 @@ class MyApp extends StatelessWidget {
         debugShowCheckedModeBanner: false,
         home: Consumer<AuthProvider>(
           builder: (context, auth, _) {
-            if (auth.currentUser != null) {
+            final user = auth.currentUser;
+            if (user != null) {
+              final role = user.role.toLowerCase();
+              if (role == 'teacher' || role == 'admin' || role == 'sir') {
+                return TeacherHomeScreen(teacher: user);
+              }
               return const HomeScreen();
             }
             return const LoginScreen();

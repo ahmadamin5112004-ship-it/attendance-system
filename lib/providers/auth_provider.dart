@@ -36,15 +36,16 @@ class AuthProvider with ChangeNotifier {
 
       if (userModel == null) {
         await _attendanceService.signOut();
-        _errorMessage = "Access Denied: Student profile does not exist in database.";
+        _errorMessage = "Access Denied: User profile does not exist in database.";
         _isLoading = false;
         notifyListeners();
         return false;
       }
 
-      if (userModel.role.toLowerCase() != 'student') {
+      final role = userModel.role.toLowerCase();
+      if (role != 'student' && role != 'teacher' && role != 'admin' && role != 'sir') {
         await _attendanceService.signOut();
-        _errorMessage = "Access Denied: Only users with student role are authorized to log in.";
+        _errorMessage = "Access Denied: Role is not authorized to log in.";
         _isLoading = false;
         notifyListeners();
         return false;
@@ -75,7 +76,7 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       try {
         final userModel = await _attendanceService.getUserData(uid);
-        if (userModel != null && userModel.role.toLowerCase() == 'student') {
+        if (userModel != null) {
           _currentUser = userModel;
         }
       } catch (e) {
@@ -111,7 +112,7 @@ class AuthProvider with ChangeNotifier {
       await _attendanceService.ensureMockStudentUser(
         uid: uid,
         email: demoEmail,
-        name: "Jane Doe (Demo)",
+        name: "Jane Doe (Student)",
         studentId: "STU-2026-993",
       );
 
@@ -122,6 +123,38 @@ class AuthProvider with ChangeNotifier {
       return true;
     } catch (e) {
       _errorMessage = "Failed to setup demo student: ${e.toString()}";
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  Future<bool> signInOrCreateDemoTeacher() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    const String demoEmail = "sir@seproject.edu";
+    const String demoPassword = "password123";
+
+    try {
+      await _attendanceService.signIn(demoEmail, demoPassword);
+      final uid = _attendanceService.currentUser?.uid ?? _attendanceService.currentLocalUid ?? 'demo_teacher_456';
+
+      await _attendanceService.ensureMockTeacherUser(
+        uid: uid,
+        email: demoEmail,
+        name: "Dr. Alan Turing (Sir)",
+        teacherId: "FAC-1001",
+      );
+
+      final userModel = await _attendanceService.getUserData(uid);
+      _currentUser = userModel;
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = "Failed to setup demo teacher: ${e.toString()}";
       _isLoading = false;
       notifyListeners();
       return false;

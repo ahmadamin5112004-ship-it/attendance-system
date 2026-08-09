@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../widgets/custom_button.dart';
 import 'home_screen.dart';
+import 'teacher_home_screen.dart';
 
-/// Screen representing the student login dashboard.
+/// Screen representing the user login dashboard for both Students and Sir/Teachers.
 class LoginScreen extends StatefulWidget {
   const LoginScreen({Key? key}) : super(key: key);
 
@@ -25,7 +26,24 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  /// Initiates normal student authentication
+  void _routeToPortal() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.currentUser;
+    if (user == null) return;
+
+    final role = user.role.toLowerCase();
+    if (role == 'teacher' || role == 'admin' || role == 'sir') {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => TeacherHomeScreen(teacher: user)),
+      );
+    } else {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+      );
+    }
+  }
+
+  /// Initiates normal authentication
   Future<void> _handleLogin() async {
     if (!_formKey.currentState!.validate()) return;
 
@@ -38,14 +56,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
 
     if (success && mounted) {
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      _routeToPortal();
     }
   }
 
-  /// Initiates the automated developer grading assistant
-  Future<void> _handleDemoLogin() async {
+  /// Demo login for Student
+  Future<void> _handleDemoStudentLogin() async {
     FocusScope.of(context).unfocus();
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
@@ -53,13 +69,28 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success && mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("Demo student account registered and authenticated!"),
+          content: Text("Demo Student account authenticated!"),
           backgroundColor: Colors.green,
         ),
       );
-      Navigator.of(
-        context,
-      ).pushReplacement(MaterialPageRoute(builder: (_) => const HomeScreen()));
+      _routeToPortal();
+    }
+  }
+
+  /// Demo login for Sir / Teacher
+  Future<void> _handleDemoTeacherLogin() async {
+    FocusScope.of(context).unfocus();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.signInOrCreateDemoTeacher();
+    if (success && mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Demo Sir / Teacher account authenticated!"),
+          backgroundColor: Colors.green,
+        ),
+      );
+      _routeToPortal();
     }
   }
 
@@ -99,7 +130,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Software Engineering University Project",
+                    "Course & Attendance Management System",
                     textAlign: TextAlign.center,
                     style: theme.textTheme.bodyMedium?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
@@ -152,7 +183,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
-                      labelText: "Student Email",
+                      labelText: "User Email (Student or Sir)",
                       prefixIcon: const Icon(Icons.email_outlined),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -207,7 +238,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   // Primary Sign In Button
                   CustomButton(
-                    text: "Student Log In",
+                    text: "Log In",
                     icon: Icons.login_rounded,
                     isLoading: authProvider.isLoading,
                     onPressed: _handleLogin,
@@ -215,7 +246,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                   const SizedBox(height: 40),
 
-                  // Demo Area Divider
+                  // Quick Demo Login Header
                   Row(
                     children: [
                       Expanded(
@@ -226,10 +257,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
                         child: Text(
-                          "Grading / Developer Tool",
+                          "Quick 1-Click Testing Portals",
                           style: theme.textTheme.bodySmall?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant
-                                .withOpacity(0.6),
+                                .withOpacity(0.8),
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -241,9 +272,28 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 16),
 
-                  // Mock data student creation button
+                  // Sir / Teacher Demo Portal
+                  ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: authProvider.isLoading ? null : _handleDemoTeacherLogin,
+                    icon: const Icon(Icons.school_rounded),
+                    label: const Text(
+                      "Log in as Sir / Teacher (Add Course & QR)",
+                      style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Student Demo Portal
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
@@ -254,20 +304,9 @@ class _LoginScreenState extends State<LoginScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: authProvider.isLoading ? null : _handleDemoLogin,
-                    icon: const Icon(Icons.auto_awesome_rounded),
-                    label: const Text("Auto-Setup Student & Log In"),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Note: This tool registers a demo account in Firebase Auth and builds its profile in Firestore automatically, ensuring immediate testing.",
-                    textAlign: TextAlign.center,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(
-                        0.6,
-                      ),
-                      fontSize: 11,
-                    ),
+                    onPressed: authProvider.isLoading ? null : _handleDemoStudentLogin,
+                    icon: const Icon(Icons.person_rounded),
+                    label: const Text("Log in as Student (Scan & Mark Attendance)"),
                   ),
                 ],
               ),

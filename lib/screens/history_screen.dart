@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../models/user_model.dart';
-import '../models/attendance_record_model.dart';
 import '../providers/attendance_provider.dart';
 
 /// Screen listing a student's logs showing course name, time, presence, and distance.
@@ -140,8 +139,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final record = history[index];
-                          final course =
-                              record.courseName ?? "General Lecture Session";
+                          final course = (record.courseCode != null && record.courseCode!.isNotEmpty)
+                              ? "${record.courseCode}: ${record.courseName ?? ''}"
+                              : (record.courseName ?? "General Lecture Session");
                           final timeStr = _formatDateTime(record.timestamp);
                           final distanceStr = record.distance >= 1000
                               ? "${(record.distance / 1000).toStringAsFixed(2)} km"
